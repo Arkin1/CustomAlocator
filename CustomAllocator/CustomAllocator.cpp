@@ -6,6 +6,8 @@
 
 //----------------------------------------------------------------------------
 
+void *startMemAddress;
+
 struct address_compare {
 	bool operator() (const std::pair<size_t,void*>& lhs, const std::pair<size_t,void*>& rhs) const {
 		auto[length_pr1, pointer_pr1] = lhs;
@@ -41,11 +43,17 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	if (memoryCreated == false)
 	{
 		ptrMem = GlobalAlloc(GMEM_FIXED, (size_t)MAX_MEMORY);
+		startMemAddress = ptrMem;
+
 		memoryCreated = true;
+
+		//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
 
 		*((size_t*)ptrMem) = aSize;
 
 		startingAddresses.insert({ MAX_MEMORY, (char*)ptrMem + sizeof(size_t) + aSize });
+
+	
 
 		return (char*)ptrMem + sizeof(size_t);
 	}
@@ -68,6 +76,8 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	*((size_t*)pointerAddress) = aSize;
 	ptrMem = (char*)pointerAddress + sizeof(size_t);
 
+
+
 	return ptrMem;
 
   //return _malloc_dbg(aSize, aBlockUse, aFileName, aLineNumber);
@@ -83,11 +93,24 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 		return;
 	}
 
-	startingAddresses.insert({ *(((size_t*)aBlock) - 1), (char*)aBlock - sizeof(size_t) });
+	startingAddresses.insert({ *(((size_t*)aBlock) - 1) + sizeof(size_t), (char*)aBlock - sizeof(size_t) });
+
+	//memset((char*)aBlock - sizeof(size_t), 0, sizeof(size_t) + *(((size_t*)aBlock) - 1));
 
 
 
 	// default CRT implementation
 	// GlobalFree(aBlock);
+}
+
+bool _cdecl checkMem()
+{
+	for (int i = 0; i < MAX_MEMORY; ++i)
+	{
+		if (((char*)startMemAddress)[i] != 0)
+			return false;
+	}
+
+	return true;
 }
 
