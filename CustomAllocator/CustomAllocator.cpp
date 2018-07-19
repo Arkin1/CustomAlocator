@@ -53,17 +53,19 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	auto iteratorAddress= startingAddresses.lower_bound({aSize + sizeof(size_t), (void*)0});
 
 	if (iteratorAddress == startingAddresses.end())
-		return ptrMem;
+	{
+		return ptrMem; //nullptr
+	}
 
 	auto[lengthAddress, pointerAddress] = *iteratorAddress;
-
 	startingAddresses.erase(iteratorAddress);
 
 	if (lengthAddress - sizeof(size_t) - aSize > 0)
+	{
 		startingAddresses.insert({ lengthAddress - sizeof(size_t) - aSize , (char*)pointerAddress + sizeof(size_t) + aSize });
-
+	}
+	
 	*((size_t*)pointerAddress) = aSize;
-
 	ptrMem = (char*)pointerAddress + sizeof(size_t);
 
 	return ptrMem;
@@ -73,7 +75,19 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-  // default CRT implementation
-	GlobalFree(aBlock);
+	auto location = startingAddresses.find({ *(((size_t*)aBlock) - 1), aBlock });
+
+	if (location != end(startingAddresses))
+	{
+		printf("Double free exception.\n");
+		return;
+	}
+
+	startingAddresses.insert({ *(((size_t*)aBlock) - 1), (char*)aBlock - sizeof(size_t) });
+
+
+
+	// default CRT implementation
+	// GlobalFree(aBlock);
 }
 
