@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="win">
+      <UniqueIdentifier>{3aea02d0-3fe5-4fdd-a597-d53b9c76df9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{c400d40d-e27d-496b-aea8-0a1b8a0a8385}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomAllocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomAllocator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CustomAllocator.def">
+      <Filter>win</Filter>
+    </None>
+  </ItemGroup>
+</Project>
