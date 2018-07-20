@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 100'000'000
+#define MAX_MEMORY 1000
 
 //----------------------------------------------------------------------------
 
@@ -53,6 +53,8 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 
 		startingAddresses.insert({ MAX_MEMORY - aSize, (char*)ptrMem  + aSize });
+
+		memset(ptrMem, 0, MAX_MEMORY);
 
 		occupiedAddresses[(char*)ptrMem] = aSize;
 
@@ -149,8 +151,7 @@ bool _cdecl checkMem()
 {
 	for (int i = 0; i < MAX_MEMORY; ++i)
 	{
-		if (((char*)startMemAddress)[i] != 0)
-			return false;
+		printf("%d", ((char*)startMemAddress)[i]);
 	}
 
 	return true;
