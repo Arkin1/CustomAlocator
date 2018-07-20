@@ -99,8 +99,8 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	location++;
 	if (location != end(occupiedAddresses))
 	{
-		startingAddresses.erase({ (*location).first - ((*prev_loc).first + (*prev_loc).second) - 1, (*location).first + (*location).second });
-		length += (*location).first - ((*prev_loc).first + (*prev_loc).second) - 1;
+		startingAddresses.erase({ (*location).first - ((*prev_loc).first + (*prev_loc).second), (*location).first + (*location).second });
+		length += (*location).first - ((*prev_loc).first + (*prev_loc).second);
 	}
 	else
 	{
@@ -116,9 +116,9 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	{
 		location--;
 
-		startingAddresses.erase({ (*prev_loc).first - ((*location).first + (*location).second) - 1, ((*location).first + (*location).second) + 1 });
-		length += (*prev_loc).first - ((*location).first + (*location).second) - 1;
-		startAddress = ((*location).first + (*location).second) + 1;
+		startingAddresses.erase({ (*prev_loc).first - ((*location).first + (*location).second), ((*location).first + (*location).second)  });
+		length += (*prev_loc).first - ((*location).first + (*location).second);
+		startAddress = ((*location).first + (*location).second);
 	}
 	else
 	{
