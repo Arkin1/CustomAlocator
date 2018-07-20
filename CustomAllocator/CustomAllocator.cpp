@@ -24,6 +24,8 @@ struct address_compare {
 
 std::multiset < std::pair<size_t, void*>, address_compare> startingAddresses;
 
+std::map<char*, size_t> occupiedAddresses;
+
 void * __cdecl CustomAllocator_New(size_t aSize, int aBlockUse, char const * aFileName, int aLineNumber)
 {
   return CustomAllocator_Malloc(aSize, aBlockUse, aFileName, aLineNumber);
@@ -49,16 +51,15 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 		//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
 
-		*((size_t*)ptrMem) = aSize;
 
-		startingAddresses.insert({ MAX_MEMORY, (char*)ptrMem + sizeof(size_t) + aSize });
+		startingAddresses.insert({ MAX_MEMORY - aSize, (char*)ptrMem  + aSize });
 
-	
+		occupiedAddresses[(char*)ptrMem] = aSize;
 
-		return (char*)ptrMem + sizeof(size_t);
+		return (char*)ptrMem;
 	}
 
-	auto iteratorAddress= startingAddresses.lower_bound({aSize + sizeof(size_t), (void*)0});
+	auto iteratorAddress= startingAddresses.lower_bound({aSize, (void*)0});
 
 	if (iteratorAddress == startingAddresses.end())
 	{
@@ -68,15 +69,15 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	auto[lengthAddress, pointerAddress] = *iteratorAddress;
 	startingAddresses.erase(iteratorAddress);
 
-	if (lengthAddress - sizeof(size_t) - aSize > 0)
+	if (lengthAddress - aSize > 0)
 	{
-		startingAddresses.insert({ lengthAddress - sizeof(size_t) - aSize , (char*)pointerAddress + sizeof(size_t) + aSize });
+		startingAddresses.insert({ lengthAddress - aSize , (char*)pointerAddress  + aSize });
 	}
 	
-	*((size_t*)pointerAddress) = aSize;
-	ptrMem = (char*)pointerAddress + sizeof(size_t);
 
+	ptrMem = (char*)pointerAddress;
 
+	occupiedAddresses[(char*)ptrMem] = aSize;
 
 	return ptrMem;
 
@@ -85,15 +86,56 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-	auto location = startingAddresses.find({ *(((size_t*)aBlock) - 1), aBlock });
-
-	if (location != end(startingAddresses))
+	auto location = occupiedAddresses.find((char*)aBlock);
+	
+	if (location == end(occupiedAddresses))
 	{
 		printf("Double free exception.\n");
 		return;
 	}
+	size_t length =(*location).second ;
+	auto prev_loc = location;
+	void *startAddress = nullptr;
+	location++;
+	if (location != end(occupiedAddresses))
+	{
+		startingAddresses.erase({ (*location).first - ((*prev_loc).first + (*prev_loc).second) - 1, (*location).first + (*location).second });
+		length += (*location).first - ((*prev_loc).first + (*prev_loc).second) - 1;
+	}
+	else
+	{
+		length += MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second);
+		if(MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) !=0)
+			startingAddresses.erase({ MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) ,
+								(*prev_loc).first + (*prev_loc).second });
+	}
+	
+	location--;
+	
+	if (location != begin(occupiedAddresses))
+	{
+		location--;
 
-	startingAddresses.insert({ *(((size_t*)aBlock) - 1) + sizeof(size_t), (char*)aBlock - sizeof(size_t) });
+		startingAddresses.erase({ (*prev_loc).first - ((*location).first + (*location).second) - 1, ((*location).first + (*location).second) + 1 });
+		length += (*prev_loc).first - ((*location).first + (*location).second) - 1;
+		startAddress = ((*location).first + (*location).second) + 1;
+	}
+	else
+	{
+
+		length += (*prev_loc).first - (char*)startMemAddress;
+		startAddress = startMemAddress;
+
+		if (length != 0)
+		{
+			startingAddresses.erase({ (*prev_loc).first - (char*)startMemAddress , startMemAddress });
+		}
+
+	}
+
+	occupiedAddresses.erase(prev_loc);
+
+	startingAddresses.insert({ length, startAddress });
 
 	//memset((char*)aBlock - sizeof(size_t), 0, sizeof(size_t) + *(((size_t*)aBlock) - 1));
 
