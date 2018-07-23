@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 1000000
+#define MAX_MEMORY 3500000
 
 //----------------------------------------------------------------------------
 
@@ -162,20 +162,44 @@ void _cdecl memoryVisualise()
 	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
 	//Draw pixels
-	for (int i = 0, j = 50; i < MAX_MEMORY; i++)
+	RECT myRect = { 1, 50, MAX_SQRT, MAX_SQRT + 51 };
+	FillRect(mydc, &myRect, CreateSolidBrush(COLOR));
+
+	/*for (int i = 0, j = 50; i < MAX_MEMORY; i++)
 	{
 		SetPixel(mydc, i % MAX_SQRT, j, COLOR);
 		j += (i % MAX_SQRT == 0);
-	}
+	}*/
 
 	COLOR = RGB(255, 0, 0);
 
 	for (const auto&[key, length] : occupiedAddresses)
 	{
-		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50; i < key - (char*)startMemAddress + length; i++)
+		if ((int)length < MAX_SQRT)
 		{
-			SetPixel(mydc, (i + 1) % MAX_SQRT, (int)j, COLOR);
-			j += ((i + 1) % MAX_SQRT == 0);
+			for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50;
+			i < key - (char*)startMemAddress + length; i++)
+			{
+				SetPixel(mydc, (i + 1) % MAX_SQRT, (int)j, COLOR);
+				j += ((i + 1) % MAX_SQRT == 0);
+			}
+		}
+		else
+		{
+			size_t i, j;
+			for (i = (key - (char*)startMemAddress), j = (size_t)(i / MAX_SQRT) + 50;
+				((i + 1) % MAX_SQRT) != 0; i++)
+			{
+				SetPixel(mydc, ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
+			}
+
+			myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT };
+			FillRect(mydc, &myRect, CreateSolidBrush(COLOR));
+
+			for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
+			{
+				SetPixel(mydc, k, (int)j + (int)length / MAX_SQRT, COLOR);
+			}
 		}
 	}
 
@@ -211,5 +235,5 @@ void _cdecl memoryUsage()
 
 size_t _cdecl maxAvailable()
 {
-	return startingAddresses.rbegin()->first;
+	return rbegin(startingAddresses)->first;
 }
