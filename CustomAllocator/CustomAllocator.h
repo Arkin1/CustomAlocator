@@ -20,6 +20,7 @@ void __cdecl memoryUsage();
 void _cdecl beginSnapShot();
 bool _cdecl endSnapShot();
 
+size_t __cdecl maxAvailable();
 //----------------------------------------------------------------------------
 
 #endif  // _CUSTOM_ALLOCATOR_H_

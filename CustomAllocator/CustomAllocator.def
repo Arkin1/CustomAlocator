@@ -8,3 +8,4 @@ EXPORTS
   memoryUsage
   beginSnapShot
   endSnapShot
+  maxAvailable
