@@ -160,7 +160,7 @@ void _cdecl memoryVisualise()
 	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
 	//Draw pixels
-	for (int i = 0, j = 0; i < MAX_MEMORY; i++)
+	for (int i = 0, j = 50; i < MAX_MEMORY; i++)
 	{
 		SetPixel(mydc, i % MAX_SQRT, j, COLOR);
 		j += ( i % MAX_SQRT == 0);
@@ -170,7 +170,7 @@ void _cdecl memoryVisualise()
 
 	for (const auto&[key, length] : occupiedAddresses)
 	{
-		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT); i < key - (char*)startMemAddress + length; i++)
+		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50; i < key - (char*)startMemAddress + length; i++)
 		{
 			SetPixel(mydc,(i + 1) % MAX_SQRT, (int)j, COLOR);
 			j += ((i + 1) % MAX_SQRT == 0);
@@ -180,8 +180,13 @@ void _cdecl memoryVisualise()
 	ReleaseDC(myconsole, mydc);
 }
 
-void _cdecl startAnalytics()
+void _cdecl memoryUsage()
 {
-
+	double sum = 0;
+	for (const auto&[key, length] : occupiedAddresses)
+	{
+		sum += length;
+	}
+	std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / MAX_MEMORY * 100) << '\n';
 }
 
