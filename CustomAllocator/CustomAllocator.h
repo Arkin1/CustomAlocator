@@ -14,8 +14,8 @@ void   __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse = _NORMAL_BLO
 void * __cdecl CustomAllocator_Malloc(size_t aSize,  int aBlockUse, char const * aFileName, int aLineNumber);
 void __cdecl   CustomAllocator_Free  (void * aBlock, int aBlockUse, char const * aFileName, int aLineNumber);
 
-void _cdecl startAnalytics();
-
+void __cdecl startAnalytics();
+void __cdecl memoryVisualise();
 //----------------------------------------------------------------------------
 
 #endif  // _CUSTOM_ALLOCATOR_H_

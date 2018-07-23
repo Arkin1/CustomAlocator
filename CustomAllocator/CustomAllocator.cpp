@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 1000
+#define MAX_MEMORY 1000000
 
 //----------------------------------------------------------------------------
 
@@ -147,9 +147,41 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	// GlobalFree(aBlock);
 }
 
+void _cdecl memoryVisualise()
+{
+	//Get a console handle
+	HWND myconsole = GetConsoleWindow();
+	//Get a handle to device context
+	HDC mydc = GetDC(myconsole);
+
+	//Choose any color
+	COLORREF COLOR = RGB(0, 255, 255);
+
+	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
+
+	//Draw pixels
+	for (int i = 0, j = 0; i < MAX_MEMORY; i++)
+	{
+		SetPixel(mydc, i % MAX_SQRT, j, COLOR);
+		j += ( i % MAX_SQRT == 0);
+	}
+	
+	COLOR = RGB(255, 0, 0);
+
+	for (const auto&[key, length] : occupiedAddresses)
+	{
+		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT); i < key - (char*)startMemAddress + length; i++)
+		{
+			SetPixel(mydc,(i + 1) % MAX_SQRT, (int)j, COLOR);
+			j += ((i + 1) % MAX_SQRT == 0);
+		}
+	}
+
+	ReleaseDC(myconsole, mydc);
+}
+
 void _cdecl startAnalytics()
 {
-
 
 }
 
