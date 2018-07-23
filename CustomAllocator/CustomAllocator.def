@@ -6,3 +6,4 @@ EXPORTS
   CustomAllocator_Free
   memoryVisualise
   memoryUsage
+  maxAvailable

@@ -163,16 +163,16 @@ void _cdecl memoryVisualise()
 	for (int i = 0, j = 50; i < MAX_MEMORY; i++)
 	{
 		SetPixel(mydc, i % MAX_SQRT, j, COLOR);
-		j += ( i % MAX_SQRT == 0);
+		j += (i % MAX_SQRT == 0);
 	}
-	
+
 	COLOR = RGB(255, 0, 0);
 
 	for (const auto&[key, length] : occupiedAddresses)
 	{
 		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50; i < key - (char*)startMemAddress + length; i++)
 		{
-			SetPixel(mydc,(i + 1) % MAX_SQRT, (int)j, COLOR);
+			SetPixel(mydc, (i + 1) % MAX_SQRT, (int)j, COLOR);
 			j += ((i + 1) % MAX_SQRT == 0);
 		}
 	}
@@ -190,3 +190,7 @@ void _cdecl memoryUsage()
 	std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / MAX_MEMORY * 100) << '\n';
 }
 
+size_t _cdecl maxAvailable()
+{
+	return startingAddresses.rbegin()->first;
+}

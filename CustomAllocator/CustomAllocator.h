@@ -16,6 +16,7 @@ void __cdecl   CustomAllocator_Free  (void * aBlock, int aBlockUse, char const *
 
 void __cdecl memoryVisualise();
 void __cdecl memoryUsage();
+size_t __cdecl maxAvailable();
 //----------------------------------------------------------------------------
 
 #endif  // _CUSTOM_ALLOCATOR_H_
