@@ -16,6 +16,10 @@ void __cdecl   CustomAllocator_Free  (void * aBlock, int aBlockUse, char const *
 
 void __cdecl memoryVisualise();
 void __cdecl memoryUsage();
+
+void _cdecl beginSnapShot();
+bool _cdecl endSnapShot();
+
 //----------------------------------------------------------------------------
 
 #endif  // _CUSTOM_ALLOCATOR_H_

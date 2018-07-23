@@ -26,6 +26,8 @@ std::multiset < std::pair<size_t, void*>, address_compare> startingAddresses;
 
 std::map<char*, size_t> occupiedAddresses;
 
+std::map<char*, size_t> snapShotOccupiedAddresses;
+
 void * __cdecl CustomAllocator_New(size_t aSize, int aBlockUse, char const * aFileName, int aLineNumber)
 {
   return CustomAllocator_Malloc(aSize, aBlockUse, aFileName, aLineNumber);
@@ -178,6 +180,23 @@ void _cdecl memoryVisualise()
 	}
 
 	ReleaseDC(myconsole, mydc);
+}
+
+void _cdecl beginSnapShot()
+{
+	//snapShotOccupiedAddresses.clear();
+
+	snapShotOccupiedAddresses.insert(begin(occupiedAddresses), end(occupiedAddresses));
+}
+
+bool _cdecl endSnapShot()
+{
+	for (auto [key,value] : occupiedAddresses)
+	{
+		if (snapShotOccupiedAddresses.find(key) == snapShotOccupiedAddresses.end())
+			return 1;
+	}
+	return 0;
 }
 
 void _cdecl memoryUsage()

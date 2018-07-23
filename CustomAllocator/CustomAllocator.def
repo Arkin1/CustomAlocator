@@ -6,3 +6,5 @@ EXPORTS
   CustomAllocator_Free
   memoryVisualise
   memoryUsage
+  beginSnapShot
+  endSnapShot
