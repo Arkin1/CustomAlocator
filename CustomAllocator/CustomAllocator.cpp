@@ -147,13 +147,9 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	// GlobalFree(aBlock);
 }
 
-bool _cdecl checkMem()
+void _cdecl startAnalytics()
 {
-	for (int i = 0; i < MAX_MEMORY; ++i)
-	{
-		printf("%d", ((char*)startMemAddress)[i]);
-	}
 
-	return true;
+
 }
 
