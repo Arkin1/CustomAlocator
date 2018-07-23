@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 1000
+#define MAX_MEMORY 100'000'000 
 
 //----------------------------------------------------------------------------
 
@@ -54,7 +54,11 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 		startingAddresses.insert({ MAX_MEMORY - aSize, (char*)ptrMem  + aSize });
 
+	
+
 		memset(ptrMem, 0, MAX_MEMORY);
+
+		memset(ptrMem, 1, aSize);
 
 		occupiedAddresses[(char*)ptrMem] = aSize;
 
@@ -79,6 +83,8 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 	ptrMem = (char*)pointerAddress;
 
+	memset(ptrMem, 1, aSize);
+
 	occupiedAddresses[(char*)ptrMem] = aSize;
 
 	return ptrMem;
@@ -95,6 +101,9 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 		printf("Double free exception.\n");
 		return;
 	}
+
+	memset(aBlock, 0, (*location).second);
+
 	size_t length =(*location).second ;
 	auto prev_loc = location;
 	void *startAddress = nullptr;
@@ -147,9 +156,17 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	// GlobalFree(aBlock);
 }
 
-void _cdecl startAnalytics()
+
+
+
+bool _cdecl memCheck()
 {
+	for (int i = 0; i < MAX_MEMORY; ++i)
+	{
+		if (((char*)startMemAddress)[i] != 0)
+			return false;
+	}
 
-
+	return true;
 }
 
