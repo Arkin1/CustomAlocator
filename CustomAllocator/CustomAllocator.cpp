@@ -8,6 +8,12 @@
 
 void *startMemAddress;
 
+HWND myconsole = 0;
+HDC mydc = 0;
+
+
+void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR);
+
 struct address_compare {
 	bool operator() (const std::pair<size_t,void*>& lhs, const std::pair<size_t,void*>& rhs) const {
 		auto[length_pr1, pointer_pr1] = lhs;
@@ -60,6 +66,10 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 		occupiedAddresses[(char*)ptrMem] = aSize;
 
+		if (mydc != 0)
+			drawRange(mydc, (char*)ptrMem, aSize, RGB(255, 0, 0));
+		  
+
 		return (char*)ptrMem;
 	}
 
@@ -83,6 +93,9 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 	occupiedAddresses[(char*)ptrMem] = aSize;
 
+	if (mydc != 0)
+		drawRange(mydc, (char*)ptrMem, aSize, RGB(255, 0 ,0));
+
 	return ptrMem;
 
   //return _malloc_dbg(aSize, aBlockUse, aFileName, aLineNumber);
@@ -91,6 +104,8 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
 	auto location = occupiedAddresses.find((char*)aBlock);
+
+
 	
 	if (location == end(occupiedAddresses))
 	{
@@ -98,6 +113,10 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 		return;
 	}
 	size_t length =(*location).second ;
+
+	if(mydc != 0)
+		drawRange(mydc, (*location).first,length, RGB(0, 255, 255));
+
 	auto prev_loc = location;
 	void *startAddress = nullptr;
 	location++;
@@ -149,12 +168,45 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	// GlobalFree(aBlock);
 }
 
+void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
+{
+
+	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
+
+	if ((int)length < MAX_SQRT)
+	{
+		for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50;
+			i < key - (char*)startMemAddress + length; i++)
+		{
+			SetPixel(hdc, (i + 1) % MAX_SQRT, (int)j, COLOR);
+			j += ((i + 1) % MAX_SQRT == 0);
+		}
+	}
+	else
+	{
+		size_t i, j;
+		for (i = (key - (char*)startMemAddress), j = (size_t)(i / MAX_SQRT) + 50;
+			((i + 1) % MAX_SQRT) != 0; i++)
+		{
+			SetPixel(hdc, ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
+		}
+
+		RECT myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT };
+		FillRect(hdc, &myRect, CreateSolidBrush(COLOR));
+
+		for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
+		{
+			SetPixel(hdc, k, (int)j + (int)length / MAX_SQRT, COLOR);
+		}
+	}
+}
+
 void _cdecl memoryVisualise()
 {
 	//Get a console handle
-	HWND myconsole = GetConsoleWindow();
+	myconsole = GetConsoleWindow();
 	//Get a handle to device context
-	HDC mydc = GetDC(myconsole);
+	mydc = GetDC(myconsole);
 
 	//Choose any color
 	COLORREF COLOR = RGB(0, 255, 255);
@@ -171,39 +223,6 @@ void _cdecl memoryVisualise()
 		j += (i % MAX_SQRT == 0);
 	}*/
 
-	COLOR = RGB(255, 0, 0);
-
-	for (const auto&[key, length] : occupiedAddresses)
-	{
-		if ((int)length < MAX_SQRT)
-		{
-			for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50;
-			i < key - (char*)startMemAddress + length; i++)
-			{
-				SetPixel(mydc, (i + 1) % MAX_SQRT, (int)j, COLOR);
-				j += ((i + 1) % MAX_SQRT == 0);
-			}
-		}
-		else
-		{
-			size_t i, j;
-			for (i = (key - (char*)startMemAddress), j = (size_t)(i / MAX_SQRT) + 50;
-				((i + 1) % MAX_SQRT) != 0; i++)
-			{
-				SetPixel(mydc, ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
-			}
-
-			myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT };
-			FillRect(mydc, &myRect, CreateSolidBrush(COLOR));
-
-			for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
-			{
-				SetPixel(mydc, k, (int)j + (int)length / MAX_SQRT, COLOR);
-			}
-		}
-	}
-
-	ReleaseDC(myconsole, mydc);
 }
 
 void _cdecl beginSnapShot()
