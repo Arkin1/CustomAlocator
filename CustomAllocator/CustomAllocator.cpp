@@ -67,7 +67,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 		occupiedAddresses[(char*)ptrMem] = aSize;
 
 		if (mydc != 0)
-			drawRange(mydc, (char*)ptrMem, aSize, RGB(255, 0, 0));
+			drawRange(mydc, (char*)ptrMem, aSize, RGB(139, 0, 0));
 		  
 
 		return (char*)ptrMem;
@@ -94,7 +94,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	occupiedAddresses[(char*)ptrMem] = aSize;
 
 	if (mydc != 0)
-		drawRange(mydc, (char*)ptrMem, aSize, RGB(255, 0 ,0));
+		drawRange(mydc, (char*)ptrMem, aSize, RGB(139, 0, 0));
 
 	return ptrMem;
 
@@ -115,14 +115,15 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	size_t length =(*location).second ;
 
 	if(mydc != 0)
-		drawRange(mydc, (*location).first,length, RGB(0, 255, 255));
+		drawRange(mydc, (*location).first,length, RGB(0, 139, 139));
 
 	auto prev_loc = location;
 	void *startAddress = nullptr;
 	location++;
 	if (location != end(occupiedAddresses))
 	{
-		startingAddresses.erase({ (*location).first - ((*prev_loc).first + (*prev_loc).second), (*location).first + (*location).second });
+		if((*location).first - ((*prev_loc).first + (*prev_loc).second) > 0)
+			startingAddresses.erase({ (*location).first - ((*prev_loc).first + (*prev_loc).second), (*prev_loc).first + (*prev_loc).second });
 		length += (*location).first - ((*prev_loc).first + (*prev_loc).second);
 	}
 	else
@@ -138,8 +139,8 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	if (location != begin(occupiedAddresses))
 	{
 		location--;
-
-		startingAddresses.erase({ (*prev_loc).first - ((*location).first + (*location).second), ((*location).first + (*location).second)  });
+		if((*prev_loc).first - ((*location).first + (*location).second) > 0)
+			startingAddresses.erase({ (*prev_loc).first - ((*location).first + (*location).second), ((*location).first + (*location).second)  });
 		length += (*prev_loc).first - ((*location).first + (*location).second);
 		startAddress = ((*location).first + (*location).second);
 	}
@@ -158,7 +159,11 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 
 	occupiedAddresses.erase(prev_loc);
 
+
 	startingAddresses.insert({ length, startAddress });
+
+	
+
 
 	//memset((char*)aBlock - sizeof(size_t), 0, sizeof(size_t) + *(((size_t*)aBlock) - 1));
 
@@ -191,12 +196,12 @@ void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
 			SetPixel(hdc, ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
 		}
 
-		RECT myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT };
+		RECT myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT + 1 };
 		FillRect(hdc, &myRect, CreateSolidBrush(COLOR));
 
 		for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
 		{
-			SetPixel(hdc, k, (int)j + (int)length / MAX_SQRT, COLOR);
+			SetPixel(hdc, k, (int)j + (int)length / MAX_SQRT + 1, COLOR);
 		}
 	}
 }
@@ -209,7 +214,7 @@ void _cdecl memoryVisualise()
 	mydc = GetDC(myconsole);
 
 	//Choose any color
-	COLORREF COLOR = RGB(0, 255, 255);
+	COLORREF COLOR = RGB(0, 139, 139);
 
 	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
@@ -249,7 +254,21 @@ void _cdecl memoryUsage()
 	{
 		sum += length;
 	}
-	std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / MAX_MEMORY * 100) << '\n';
+	//std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / MAX_MEMORY * 100) << '\n';
+}
+
+double _cdecl metricFragmentation()
+{
+
+	if(startingAddresses.size() == 0)
+		return 0;
+
+	size_t sum = 0;
+
+	for (auto[length, address] : startingAddresses)
+		sum += length;
+
+	return (double)sum / (startingAddresses.size() * startingAddresses.size());
 }
 
 size_t _cdecl maxAvailable()

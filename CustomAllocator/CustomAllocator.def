@@ -9,3 +9,4 @@ EXPORTS
   beginSnapShot
   endSnapShot
   maxAvailable
+  metricFragmentation
