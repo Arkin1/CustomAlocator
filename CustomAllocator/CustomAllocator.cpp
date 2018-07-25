@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 3500000
+#define MAX_MEMORY 2500000
 
 //----------------------------------------------------------------------------
 
@@ -197,7 +197,9 @@ void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
 		}
 
 		RECT myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT + 1 };
-		FillRect(hdc, &myRect, CreateSolidBrush(COLOR));
+		HBRUSH handler = CreateSolidBrush(COLOR);
+		FillRect(hdc, &myRect, handler);
+		DeleteObject(handler);
 
 		for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
 		{
@@ -220,13 +222,10 @@ void _cdecl memoryVisualise()
 
 	//Draw pixels
 	RECT myRect = { 1, 50, MAX_SQRT, MAX_SQRT + 51 };
-	FillRect(mydc, &myRect, CreateSolidBrush(COLOR));
-
-	/*for (int i = 0, j = 50; i < MAX_MEMORY; i++)
-	{
-		SetPixel(mydc, i % MAX_SQRT, j, COLOR);
-		j += (i % MAX_SQRT == 0);
-	}*/
+	HBRUSH handler = CreateSolidBrush(COLOR);
+	FillRect(mydc, &myRect, handler);
+	
+	DeleteObject(handler);
 
 }
 
