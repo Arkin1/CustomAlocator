@@ -190,20 +190,24 @@ void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
 	else
 	{
 		size_t i, j;
-		for (i = (key - (char*)startMemAddress), j = (size_t)(i / MAX_SQRT) + 50;
+		for (i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + 50;
 			((i + 1) % MAX_SQRT) != 0; i++)
 		{
 			SetPixel(hdc, ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
+			length--;
 		}
-
-		RECT myRect = { 1, (int)j + 1, MAX_SQRT, (int)j + (int)length / MAX_SQRT + 1 };
+		j++;
+		RECT myRect = { 1, (int)j, MAX_SQRT, (int)j + (int)length / MAX_SQRT };
+		j += (int)length / MAX_SQRT;
+		length -= MAX_SQRT * ((int)length / MAX_SQRT);
 		HBRUSH handler = CreateSolidBrush(COLOR);
 		FillRect(hdc, &myRect, handler);
 		DeleteObject(handler);
 
-		for (int k = 1; k <= ((int)length - ((MAX_SQRT - (key - (char*)startMemAddress)) % MAX_SQRT)) % MAX_SQRT; k++)
+		int k = 1;
+		while(length --)
 		{
-			SetPixel(hdc, k, (int)j + (int)length / MAX_SQRT + 1, COLOR);
+			SetPixel(hdc, k++, (int)j, COLOR);
 		}
 	}
 }
