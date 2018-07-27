@@ -15,7 +15,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize,  int aBlockUse, char const *
 void __cdecl   CustomAllocator_Free  (void * aBlock, int aBlockUse, char const * aFileName, int aLineNumber);
 
 void __cdecl memoryVisualise();
-void __cdecl memoryUsage();
+size_t __cdecl memoryUsage();
 
 void _cdecl beginSnapShot();
 bool _cdecl endSnapShot();
