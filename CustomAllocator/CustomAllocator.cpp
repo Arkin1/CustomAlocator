@@ -1,11 +1,7 @@
-
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
 #define MAX_MEMORY 2500000
-#define OFFSET MAX_MEMORY / 10
-
-const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
 //----------------------------------------------------------------------------
 
@@ -18,7 +14,7 @@ HDC mydc = 0;
 void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR);
 
 struct address_compare {
-	bool operator() (const std::pair<size_t,void*>& lhs, const std::pair<size_t,void*>& rhs) const {
+	bool operator() (const std::pair<size_t, void*>& lhs, const std::pair<size_t, void*>& rhs) const {
 		auto[length_pr1, pointer_pr1] = lhs;
 		auto[length_pr2, pointer_pr2] = rhs;
 
@@ -39,12 +35,12 @@ std::map<char*, size_t> snapShotOccupiedAddresses;
 
 void * __cdecl CustomAllocator_New(size_t aSize, int aBlockUse, char const * aFileName, int aLineNumber)
 {
-  return CustomAllocator_Malloc(aSize, aBlockUse, aFileName, aLineNumber);
+	return CustomAllocator_Malloc(aSize, aBlockUse, aFileName, aLineNumber);
 }
 
 void __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse, char const * aFileName, int aLineNumber) noexcept
 {
-  CustomAllocator_Free(aBlock, aBlockUse, aFileName, aLineNumber);
+	CustomAllocator_Free(aBlock, aBlockUse, aFileName, aLineNumber);
 }
 
 void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
@@ -52,14 +48,6 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	static bool memoryCreated = false;
 	// default CRT implementation
 	void *ptrMem = nullptr;
-
-	size_t offset = 0;
-
-	if (aSize > MAX_SQRT / 2 - 1)
-	{
-		offset = OFFSET - OFFSET % (MAX_SQRT);
-	}
-
 
 	if (memoryCreated == false)
 	{
@@ -70,60 +58,21 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 		//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
 
-		startingAddresses.insert({ MAX_SQRT / 2 - 1, startMemAddress });
-		int nr = 1;
-		for (char* aux = (char*)startMemAddress + MAX_SQRT / 2 - 1; aux + MAX_SQRT / 2 < (char*)startMemAddress + OFFSET; aux += MAX_SQRT / 2 + (nr % 2))
-		{
-			occupiedAddresses[aux] = 1;
 
-			size_t dist = 0;
+		startingAddresses.insert({ MAX_MEMORY - aSize, (char*)ptrMem + aSize });
 
+		memset(ptrMem, 0, MAX_MEMORY);
 
+		occupiedAddresses[(char*)ptrMem] = aSize;
 
-			if (mydc != 0)
-				drawRange(mydc, (char*)(aux), 1, RGB(255, 255, 0));
+		if (mydc != 0)
+			drawRange(mydc, (char*)ptrMem, aSize, RGB(139, 0, 0));
 
 
-			startingAddresses.insert({ MAX_SQRT / 2 + (nr % 2), (void*)((char*)aux + 1) });
-
-			if (occupiedAddresses.size() > 1)
-			{
-				auto it = occupiedAddresses.rbegin();
-
-				auto cpy_it = it;
-				cpy_it++;
-
-				dist = (*it).first - (*cpy_it).first;
-			}
-
-
-			nr++;
-		}
-
-		startingAddresses.insert({ MAX_MEMORY - OFFSET, (char*)startMemAddress + OFFSET });
-
-
-		return CustomAllocator_Malloc(aSize, _NORMAL_BLOCK, __FILE__, 0);
+		return (char*)ptrMem;
 	}
 
-	auto iteratorAddress = end(startingAddresses);
-
-	for (auto it = begin(startingAddresses); it != end(startingAddresses); ++it)
-	{
-		if ((*it).first > MAX_SQRT / 2 - 1)
-			break;
-
-		if ((*it).first >= aSize)
-		{
-			if ((char*)(*it).second < (char*)startMemAddress + OFFSET)
-			{
-				iteratorAddress = it;
-				break;
-			}
-		}
-	}
-	if (iteratorAddress == end(startingAddresses))
-		iteratorAddress = startingAddresses.lower_bound({ aSize, (void*)((char*)startMemAddress) });
+	auto iteratorAddress = startingAddresses.lower_bound({ aSize, (void*)0 });
 
 	if (iteratorAddress == startingAddresses.end())
 	{
@@ -226,7 +175,7 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
 {
 
-
+	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
 	if ((int)length < MAX_SQRT)
 	{
@@ -255,7 +204,7 @@ void drawRange(HDC hdc, char* key, size_t length, COLORREF COLOR)
 		DeleteObject(handler);
 
 		int k = 1;
-		while(length --)
+		while (length--)
 		{
 			SetPixel(hdc, k++, (int)j, COLOR);
 		}
@@ -272,13 +221,13 @@ void _cdecl memoryVisualise()
 	//Choose any color
 	COLORREF COLOR = RGB(0, 139, 139);
 
-	
+	const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
 	//Draw pixels
 	RECT myRect = { 1, 50, MAX_SQRT, MAX_SQRT + 51 };
 	HBRUSH handler = CreateSolidBrush(COLOR);
 	FillRect(mydc, &myRect, handler);
-	
+
 	DeleteObject(handler);
 
 }
@@ -292,13 +241,14 @@ void _cdecl beginSnapShot()
 
 bool _cdecl endSnapShot()
 {
-	for (auto [key,value] : occupiedAddresses)
+	for (auto[key, value] : occupiedAddresses)
 	{
 		if (snapShotOccupiedAddresses.find(key) == snapShotOccupiedAddresses.end())
 			return 1;
 	}
 	return 0;
 }
+
 
 size_t _cdecl memoryUsage()
 {
@@ -316,8 +266,8 @@ double _cdecl metricFragmentation()
 {
 
 	return 1 - (4 * pow(((long long)startingAddresses.size() - (long long)MAX_MEMORY / 2), 2) / (double)MAX_MEMORY / (double)MAX_MEMORY)*
-			((double)memoryUsage()/(MAX_MEMORY - ((*startingAddresses.rbegin()).first)));
-	
+		((double)memoryUsage() / (MAX_MEMORY - ((*startingAddresses.rbegin()).first)));
+
 }
 
 size_t _cdecl maxAvailable()
