@@ -71,8 +71,8 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 		//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
 
 		startingAddresses.insert({ MAX_SQRT / 2 - 1, startMemAddress });
-		
-		for (char* aux = (char*)startMemAddress + MAX_SQRT / 2 - 1; aux + MAX_SQRT / 2 -1  < (char*)startMemAddress + OFFSET; aux += MAX_SQRT / 2 - 1)
+		char* aux;
+		for (aux= (char*)startMemAddress + MAX_SQRT / 2 - 1; aux + MAX_SQRT / 2 -1  < (char*)startMemAddress + OFFSET; aux += MAX_SQRT / 2 - 1)
 		{
 			occupiedAddresses[aux] = 1;
 
@@ -80,7 +80,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 			
 
 			if (mydc != 0)
-				drawRange(mydc, (char*)(aux), 2, RGB(255, 255, 0));
+				drawRange(mydc, (char*)(aux), 1, RGB(255, 255, 0));
 
 
 			startingAddresses.insert({ MAX_SQRT / 2 - 1, (void*)((char*)aux + 1) });
@@ -89,7 +89,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 			aux++;
 		}
 
-		startingAddresses.insert({ MAX_MEMORY - OFFSET, (char*)startMemAddress + OFFSET });
+		startingAddresses.insert({ MAX_MEMORY - (aux - (char*)startMemAddress) , aux});
 
 
 		return CustomAllocator_Malloc(aSize, _NORMAL_BLOCK, __FILE__, 0);
