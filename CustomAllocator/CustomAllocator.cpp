@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 200000
-#define MAX_NUMBER_MEM_BLOCKS 10
+#define MAX_MEMORY 2000
+#define MAX_NUMBER_MEM_BLOCKS 500
 //----------------------------------------------------------------------------
 
 int consoleWidth;
@@ -46,20 +46,20 @@ private:
 	{
 		const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
-		//if ((int)length < MAX_SQRT)
-		//{
+		if ((int)length < MAX_SQRT)
+		{
 			for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft;
 				i < key - (char*)startMemAddress + length; i++)
 			{
 				SetPixel(hdc, xLeft  + (i + 1) % MAX_SQRT, (int)j, COLOR);
 				j += ((i + 1) % MAX_SQRT == 0);
 			}
-		//}
-		/*else
+		}
+		else
 		{
 			size_t i, j;
 			for (i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft;
-				((i + 1) % MAX_SQRT) != 0; i++)
+				(i  % MAX_SQRT) != 0; i++)
 			{
 				SetPixel(hdc, xLeft + ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
 				length--;
@@ -77,7 +77,7 @@ private:
 			{
 				SetPixel(hdc, xLeft + k++, (int)j, COLOR);
 			}
-		}*/
+		}
 	}
 
 	void clearVisualiserArea()
