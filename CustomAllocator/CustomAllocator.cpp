@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 2496400
-#define OFFSET MAX_MEMORY / 10
+#define MAX_MEMORY 24964000
+#define OFFSET MAX_MEMORY / 50
 
 const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
@@ -70,26 +70,25 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 		//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
 
-		startingAddresses.insert({ MAX_SQRT / 2 - 1, startMemAddress });
+		startingAddresses.insert({ MAX_SQRT / 2 - 2, startMemAddress });
 		char* aux;
-		for (aux= (char*)startMemAddress + MAX_SQRT / 2 - 1; aux + MAX_SQRT / 2 -1  < (char*)startMemAddress + OFFSET; aux += MAX_SQRT / 2 - 1)
+		for (aux= (char*)startMemAddress + MAX_SQRT / 2 - 2; aux + MAX_SQRT / 2 -1  < (char*)startMemAddress + OFFSET; aux += MAX_SQRT / 2 - 1)
 		{
 			occupiedAddresses[aux] = 1;
 
-
-			
 
 			if (mydc != 0)
 				drawRange(mydc, (char*)(aux), 1, RGB(255, 255, 0));
 
 
-			startingAddresses.insert({ MAX_SQRT / 2 - 1, (void*)((char*)aux + 1) });
+			startingAddresses.insert({ MAX_SQRT / 2 - 2, (void*)((char*)aux + 1) });
 
 
-			aux++;
+			
 		}
+		occupiedAddresses[aux] = 1;
 
-		startingAddresses.insert({ MAX_MEMORY - (aux - (char*)startMemAddress) , aux});
+		startingAddresses.insert({ MAX_MEMORY - (aux - (char*)startMemAddress) - 1 , aux + 1});
 
 
 		return CustomAllocator_Malloc(aSize, _NORMAL_BLOCK, __FILE__, 0);
@@ -99,7 +98,7 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 
 	for (auto it = begin(startingAddresses); it != end(startingAddresses); ++it)
 	{
-		if ((*it).first > MAX_SQRT / 2 - 1)
+		if ((*it).first > MAX_SQRT / 2 - 2)
 			break;
 
 		if ((*it).first >= aSize)
@@ -111,8 +110,11 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 			}
 		}
 	}
+
 	if (iteratorAddress == end(startingAddresses))
 		iteratorAddress = startingAddresses.lower_bound({ aSize, (void*)((char*)startMemAddress) });
+
+
 
 	if (iteratorAddress == startingAddresses.end())
 	{
@@ -306,6 +308,8 @@ size_t _cdecl memoryUsage()
 
 double _cdecl metricFragmentation()
 {
+
+
 
 	return 1 - (4 * pow(((long long)startingAddresses.size() - (long long)MAX_MEMORY / 2), 2) / (double)MAX_MEMORY / (double)MAX_MEMORY)*
 			((double)memoryUsage()/(MAX_MEMORY - ((*startingAddresses.rbegin()).first)));
