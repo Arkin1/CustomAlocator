@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "CustomAllocator.h"
 
-#define MAX_MEMORY 200000
-#define MAX_NUMBER_MEM_BLOCKS 10
+#define MAX_MEMORY 30000
+#define MAX_NUMBER_MEM_BLOCKS 60
 //----------------------------------------------------------------------------
 
 int consoleWidth;
@@ -46,38 +46,44 @@ private:
 	{
 		const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
 
-		//if ((int)length < MAX_SQRT)
-		//{
+		if ((int)length < MAX_SQRT)
+		{
 			for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft;
 				i < key - (char*)startMemAddress + length; i++)
 			{
 				SetPixel(hdc, xLeft  + (i + 1) % MAX_SQRT, (int)j, COLOR);
 				j += ((i + 1) % MAX_SQRT == 0);
 			}
-		//}
-		/*else
+		}
+		else
 		{
 			size_t i, j;
-			for (i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft;
-				((i + 1) % MAX_SQRT) != 0; i++)
+			for (i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft; ; i++)
 			{
 				SetPixel(hdc, xLeft + ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
 				length--;
+				if ((i + 1) % MAX_SQRT == 0)
+				{
+					break;
+				}
 			}
 			j++;
+			
 			RECT myRect = { xLeft, (int)j, xLeft + MAX_SQRT, (int)j + (int)length / MAX_SQRT };
-			j += (int)length / MAX_SQRT;
-			length -= MAX_SQRT * ((int)length / MAX_SQRT) - 1;
 			HBRUSH handler = CreateSolidBrush(COLOR);
 			FillRect(hdc, &myRect, handler);
 			DeleteObject(handler);
+
+			j += (int)length / MAX_SQRT;
+			length -= MAX_SQRT * ((int)length / MAX_SQRT);
+			
 
 			int k = 1;
 			while (length--)
 			{
 				SetPixel(hdc, xLeft + k++, (int)j, COLOR);
 			}
-		}*/
+		}
 	}
 
 	void clearVisualiserArea()
@@ -431,7 +437,7 @@ size_t _cdecl memoryUsage()
 
 double _cdecl metricFragmentation(int index)
 {
-	if (index < memoryBlocks.size())
+	if (index < (int)memoryBlocks.size())
 	{
 		auto it = begin(memoryBlocks);
 
