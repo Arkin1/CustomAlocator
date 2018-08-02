@@ -21,7 +21,7 @@ void _cdecl beginSnapShot();
 bool _cdecl endSnapShot();
 
 size_t __cdecl maxAvailable();
-double metricFragmentation();
+double metricFragmentation(int index);
 //----------------------------------------------------------------------------
 
 #endif  // _CUSTOM_ALLOCATOR_H_
