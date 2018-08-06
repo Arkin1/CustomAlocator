@@ -2,7 +2,7 @@
 #include "CustomAllocator.h"
 
 
-#define MAX_NUMBER_MEM_BLOCKS 60
+#define MAX_NUMBER_MEM_BLOCKS 120
 //----------------------------------------------------------------------------
 
 int consoleWidth;
@@ -340,16 +340,16 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 {
 	const int MAX_MEMORY =250000;
 
-	const int MEM_DELIM = 25000;
+	const int MEM_DELIM = 10000;
 
 	if (memoryBlocks.size() == 0)
 	{
-		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
-		memoryBlocks.front().setVisualiserCoordinates(nextX + 1, nextY + 50);
-		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
-		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
-		memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
-		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
+		for (int i = 0; nextX < consoleWidth ; ++i)
+		{
+			memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
+			memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
+			nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
+		}
 	}
 
 	for (auto& memBlock : memoryBlocks)
