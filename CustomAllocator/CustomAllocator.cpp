@@ -77,7 +77,7 @@ private:
 			DeleteObject(handler);
 
 			j += (int)length / MAX_SQRT;
-			length -= MAX_SQRT * ((int)length / MAX_SQRT);
+			length -= (int)ceil((double)MAX_SQRT * ((double)length / (double)MAX_SQRT));
 
 
 			int k = 1;
@@ -209,7 +209,7 @@ public:
 	{
 		auto location = occupiedAddresses.find((char*)aBlock);
 
-
+		//Sleep(10);
 
 		if (location == end(occupiedAddresses))
 		{
@@ -338,22 +338,29 @@ void __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse, char const * a
 
 void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-	const int MAX_MEMORY =250000;
+	const int MAX_MEMORY = 2097152;
 
-	const int MEM_DELIM = 25000;
+	const int MEM_DELIM = 102400 / 8;
 
-	if (memoryBlocks.size() == 0)
+	const int SPECIAL_BLOCKS_NUMBER = 0;
+	/*if (memoryBlocks.size() == 0)
 	{
 		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
-		memoryBlocks.front().setVisualiserCoordinates(nextX + 1, nextY + 50);
+		memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
 		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
 		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
 		memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
 		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
-	}
+		
 
+	}*/
+
+	int nr = 0;
 	for (auto& memBlock : memoryBlocks)
 	{
+		nr++;
+		if (aSize > 10 && nr <= SPECIAL_BLOCKS_NUMBER) continue;
+		
 		void *memAddress = memBlock.malloc(aSize);
 
 		if (memAddress != nullptr)
