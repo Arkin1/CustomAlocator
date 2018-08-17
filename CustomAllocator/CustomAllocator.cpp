@@ -2,24 +2,45 @@
 #include "CustomAllocator.h"
 
 
+
 #define MAX_NUMBER_MEM_BLOCKS 60
 //----------------------------------------------------------------------------
 
-int consoleWidth;
-int nextX = 0;
-int nextY = 0;
+#ifdef ALLOCATOR_DEBUGGER
+	static AllocatorEventDebugger *allocEventDebugger = nullptr;
+
+	struct BlockParams
+	{
+		void *startBlockAddress;
+		size_t mem;
+	};
+
+	enum class MemTypeEv : int
+	{
+		MallocEvent,
+		FreeEvent
+	};
+
+	struct MemParams
+	{
+		MemTypeEv type;
+		void *startBlockAddress;
+		void *startMemAddress;
+		size_t mem;
+	};
+
+	static std::vector< std::variant<BlockParams, MemParams> > notCatchedEvents;
+
+#endif
 
 class MemoryBlock
 {
 private:
 
-	int MAX_MEMORY;
+	int Memory;
 
 	bool memoryCreated;
 	void *startMemAddress;
-
-	static HWND console;
-	static HDC hdc;
 
 	struct address_compare {
 		bool operator() (const std::pair<size_t, void*>& lhs, const std::pair<size_t, void*>& rhs) const {
@@ -41,115 +62,13 @@ private:
 
 	std::map<char*, size_t> snapShotOccupiedAddresses;
 
-	int xLeft, yLeft;
 
-
-	void drawRange(char* key, size_t length, COLORREF COLOR)
-	{
-		const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
-
-		if ((int)length < MAX_SQRT)
-		{
-			for (size_t i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft;
-				i < key - (char*)startMemAddress + length; i++)
-			{
-				SetPixel(hdc, xLeft + (i + 1) % MAX_SQRT, (int)j, COLOR);
-				j += ((i + 1) % MAX_SQRT == 0);
-			}
-		}
-		else
-		{
-			size_t i, j;
-			for (i = key - (char*)startMemAddress, j = (size_t)(i / MAX_SQRT) + yLeft; ; i++)
-			{
-				SetPixel(hdc, xLeft + ((int)i + 1) % MAX_SQRT, (int)j, COLOR);
-				length--;
-				if ((i + 1) % MAX_SQRT == 0)
-				{
-					break;
-				}
-			}
-			j++;
-
-			RECT myRect = { xLeft, (int)j, xLeft + MAX_SQRT, (int)j + (int)length / MAX_SQRT };
-			HBRUSH handler = CreateSolidBrush(COLOR);
-			FillRect(hdc, &myRect, handler);
-			DeleteObject(handler);
-
-			j += (int)length / MAX_SQRT;
-			length -= (int)ceil((double)MAX_SQRT * ((double)length / (double)MAX_SQRT));
-
-
-			int k = 1;
-			while (length--)
-			{
-				SetPixel(hdc, xLeft + k++, (int)j, COLOR);
-			}
-		}
-	}
-
-	void clearVisualiserArea()
-	{
-		const int MAX_SQRT = (int)sqrt(MAX_MEMORY);
-		COLORREF COLOR = RGB(0, 139, 139);
-
-		//Draw pixels
-		RECT myRect = { xLeft, yLeft,xLeft + MAX_SQRT, MAX_SQRT + yLeft + 1 };
-		HBRUSH handler = CreateSolidBrush(COLOR);
-		FillRect(hdc, &myRect, handler);
-
-		DeleteObject(handler);
-
-		COLOR = RGB(255, 255, 102);
-
-		myRect = { xLeft + MAX_SQRT , yLeft,xLeft + MAX_SQRT + 1, MAX_SQRT + yLeft + 1 };
-
-		handler = CreateSolidBrush(COLOR);
-		FillRect(hdc, &myRect, handler);
-
-		DeleteObject(handler);
-
-		COLOR = RGB(255, 255, 102);
-
-		myRect = { xLeft ,  yLeft + MAX_SQRT + 1,xLeft + MAX_SQRT + 1, yLeft + MAX_SQRT + 2 };
-
-		handler = CreateSolidBrush(COLOR);
-		FillRect(hdc, &myRect, handler);
-
-		DeleteObject(handler);
-
-		COLOR = RGB(255, 255, 102);
-
-		myRect = { xLeft ,  yLeft - 1,xLeft + MAX_SQRT + 1, yLeft + 1 };
-
-		handler = CreateSolidBrush(COLOR);
-		FillRect(hdc, &myRect, handler);
-
-		DeleteObject(handler);
-
-		COLOR = RGB(255, 255, 102);
-
-		myRect = { xLeft - 1 , yLeft,xLeft, yLeft + MAX_SQRT + 1 };
-
-		handler = CreateSolidBrush(COLOR);
-		FillRect(hdc, &myRect, handler);
-
-		DeleteObject(handler);
-
-	}
 
 public:
 
-	MemoryBlock(int mem) : memoryCreated(false), xLeft(1), yLeft(0),MAX_MEMORY(mem) {}
+	MemoryBlock(int mem) : memoryCreated(false),Memory(mem) {}
 
-	void setVisualiserCoordinates(int x, int y)
-	{
-		xLeft = x;
-		yLeft = y;
 
-		if (hdc != 0)
-			clearVisualiserArea();
-	}
 
 	void* malloc(size_t aSize)
 	{
@@ -158,22 +77,45 @@ public:
 
 		if (memoryCreated == false)
 		{
-			ptrMem = GlobalAlloc(GMEM_FIXED, (size_t)MAX_MEMORY);
+			ptrMem = GlobalAlloc(GMEM_FIXED, (size_t)Memory);
 			startMemAddress = ptrMem;
 
 			memoryCreated = true;
 
-			//memset((char*)ptrMem, 0, (size_t)MAX_MEMORY);
+			//memset((char*)ptrMem, 0, (size_t)Memory);
 
 
-			startingAddresses.insert({ MAX_MEMORY - aSize, (char*)ptrMem + aSize });
+			startingAddresses.insert({ Memory - aSize, (char*)ptrMem + aSize });
 
-			memset(ptrMem, 0, MAX_MEMORY);
+			memset(ptrMem, 0, Memory);
 
 			occupiedAddresses[(char*)ptrMem] = aSize;
 
-			if (hdc != 0)
-				drawRange((char*)ptrMem, aSize, RGB(139, 0, 0));
+			#ifdef ALLOCATOR_DEBUGGER
+				
+				if (allocEventDebugger != nullptr)
+				{
+					allocEventDebugger->onNewBlock(startMemAddress, (size_t)Memory);
+					allocEventDebugger->onNewMemory(startMemAddress, ptrMem, aSize);
+				}
+				else
+				{
+					BlockParams blockParams;
+					blockParams.startBlockAddress= startMemAddress;
+					blockParams.mem = (size_t)Memory;
+
+					notCatchedEvents.push_back(std::variant<BlockParams, MemParams>(blockParams));
+
+					MemParams memParams;
+
+					memParams.type = MemTypeEv::MallocEvent;
+					memParams.startBlockAddress = startMemAddress;
+					memParams.startMemAddress = ptrMem;
+					memParams.mem = aSize;
+
+					notCatchedEvents.push_back(std::variant<BlockParams, MemParams>(memParams));
+				}
+			#endif
 
 
 			return (char*)ptrMem;
@@ -199,8 +141,23 @@ public:
 
 		occupiedAddresses[(char*)ptrMem] = aSize;
 
-		if (hdc != 0)
-			drawRange((char*)ptrMem, aSize, RGB(139, 0, 0));
+		#ifdef ALLOCATOR_DEBUGGER
+			if (allocEventDebugger != nullptr)
+			{
+				allocEventDebugger->onNewMemory(startMemAddress, ptrMem, aSize);
+			}
+			else
+			{
+				MemParams memParams;
+
+				memParams.type = MemTypeEv::MallocEvent;
+				memParams.startBlockAddress = startMemAddress;
+				memParams.startMemAddress = ptrMem;
+				memParams.mem = aSize;
+
+				notCatchedEvents.push_back(std::variant<BlockParams, MemParams>(memParams));
+			}
+		#endif
 
 		return ptrMem;
 	}
@@ -209,7 +166,7 @@ public:
 	{
 		auto location = occupiedAddresses.find((char*)aBlock);
 
-		//Sleep(10);
+		Sleep(10);
 
 		if (location == end(occupiedAddresses))
 		{
@@ -217,8 +174,24 @@ public:
 		}
 		size_t length = (*location).second;
 
-		if (hdc != 0)
-			drawRange((*location).first, length, RGB(0, 139, 139));
+		#ifdef ALLOCATOR_DEBUGGER
+			if (allocEventDebugger != nullptr)
+			{
+				allocEventDebugger->onDeleteMemory(startMemAddress, (*location).first, length);
+			}
+			else
+			{
+				MemParams memParams;
+
+				memParams.type = MemTypeEv::FreeEvent;
+				memParams.startBlockAddress = startMemAddress;
+				memParams.startMemAddress = (*location).first;
+				memParams.mem = length;
+
+				notCatchedEvents.push_back(std::variant<BlockParams, MemParams>(memParams));
+			}
+
+		#endif
 
 		auto prev_loc = location;
 		void *startAddress = nullptr;
@@ -231,9 +204,9 @@ public:
 		}
 		else
 		{
-			length += MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second);
-			if (MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) != 0)
-				startingAddresses.erase({ MAX_MEMORY - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) ,
+			length += Memory - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second);
+			if (Memory - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) != 0)
+				startingAddresses.erase({ Memory - ((*prev_loc).first - (char*)startMemAddress + (*prev_loc).second) ,
 				(*prev_loc).first + (*prev_loc).second });
 		}
 
@@ -296,7 +269,7 @@ public:
 		}
 
 		return sum;
-		//std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / MAX_MEMORY * 100) << '\n';
+		//std::cout << std::setprecision(6) << std::fixed << "Memory used: %" << (sum / Memory * 100) << '\n';
 	}
 
 	size_t max_Available()
@@ -310,21 +283,16 @@ public:
 	double metric_Fragmentation()
 	{
 
-		return 1 - (4 * pow(((long long)startingAddresses.size() - (long long)MAX_MEMORY / 2), 2) / (double)MAX_MEMORY / (double)MAX_MEMORY)*
-			((double)memory_Usage() / (MAX_MEMORY - max_Available()));
+		return 1 - (4 * pow(((long long)startingAddresses.size() - (long long)Memory / 2), 2) / (double)Memory / (double)Memory)*
+			((double)memory_Usage() / (Memory - max_Available()));
 
 	}
 
-	friend void memoryVisualise();
 
 };
 
-HWND MemoryBlock::console = 0;
-HDC MemoryBlock::hdc = 0;
 
-
-
-std::list<MemoryBlock> memoryBlocks;
+static std::list<MemoryBlock> memoryBlocks;
 
 void * __cdecl CustomAllocator_New(size_t aSize, int aBlockUse, char const * aFileName, int aLineNumber)
 {
@@ -338,28 +306,25 @@ void __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse, char const * a
 
 void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-	const int MAX_MEMORY = 2097152;
+	const int MAX_MEMORY = 2097152/2;
 
 	const int MEM_DELIM = 102400 / 8;
 
 	const int SPECIAL_BLOCKS_NUMBER = 0;
-	/*if (memoryBlocks.size() == 0)
-	{
-		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
-		memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
-		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
-		memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
-		memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
-		nextX += (int)(sqrt(MEM_DELIM) + 1) + 1;
-		
 
-	}*/
+	if (memoryBlocks.size() == 0)
+	{
+		for (int i = 0; i < SPECIAL_BLOCKS_NUMBER; ++i)
+		{
+			memoryBlocks.push_back(MemoryBlock(MEM_DELIM));
+		}
+	}
 
 	int nr = 0;
 	for (auto& memBlock : memoryBlocks)
 	{
 		nr++;
-		if (aSize > 10 && nr <= SPECIAL_BLOCKS_NUMBER) continue;
+		if (aSize > 100 && nr <= SPECIAL_BLOCKS_NUMBER) continue;
 		
 		void *memAddress = memBlock.malloc(aSize);
 
@@ -371,23 +336,6 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	if (memoryBlocks.size() < MAX_NUMBER_MEM_BLOCKS)
 	{
 		memoryBlocks.push_back(MemoryBlock(MAX_MEMORY));
-
-
-		if (nextX + sqrt(MAX_MEMORY) + 1 < consoleWidth)
-		{
-			memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
-
-			nextX += (int)(sqrt(MAX_MEMORY) + 1) + 1;
-		}
-		else
-		{
-			nextX = 0;
-			nextY += (int)(sqrt(MAX_MEMORY)) + 3;
-			memoryBlocks.back().setVisualiserCoordinates(nextX + 1, nextY + 50);
-			nextX += (int)(sqrt(MAX_MEMORY) + 1) + 1;
-
-		}
-
 
 		return memoryBlocks.back().malloc(aSize);
 	}
@@ -406,22 +354,6 @@ void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const *
 	}
 	// default CRT implementation
 	// GlobalFree(aBlock);
-}
-void _cdecl memoryVisualise()
-{
-	//Get a console handle
-	MemoryBlock::console = GetConsoleWindow();
-	//Get a handle to device context
-	MemoryBlock::hdc = GetDC(MemoryBlock::console);
-
-
-	RECT rect;
-
-	GetWindowRect(MemoryBlock::console, &rect);
-
-
-	consoleWidth = rect.right;
-
 }
 
 void _cdecl beginSnapShot()
@@ -443,7 +375,6 @@ bool _cdecl endSnapShot()
 	}
 	return 0;
 }
-
 
 size_t _cdecl memoryUsage()
 {
@@ -483,3 +414,41 @@ size_t _cdecl maxAvailable()
 
 	return mx;
 }
+
+#ifdef ALLOCATOR_DEBUGGER
+	void _cdecl setEventDebugger(AllocatorEventDebugger* eventDebugger)
+	{
+		allocEventDebugger = eventDebugger;
+
+		for (const auto &ev : notCatchedEvents)
+		{
+			if (std::holds_alternative<BlockParams>(ev))
+			{
+				BlockParams blockParams = std::get<BlockParams>(ev);
+
+				allocEventDebugger->onNewBlock(blockParams.startBlockAddress, blockParams.mem);
+			}
+			else
+			{
+				MemParams memParams = std::get<MemParams>(ev);
+
+				if (memParams.type == MemTypeEv::MallocEvent)
+				{
+					allocEventDebugger->onNewMemory(memParams.startBlockAddress,
+													memParams.startMemAddress,
+													memParams.mem);
+				}
+				else
+				{
+					allocEventDebugger->onNewMemory(memParams.startBlockAddress,
+													memParams.startMemAddress,
+													memParams.mem);
+				}
+
+			}
+		}
+
+		notCatchedEvents.clear();
+
+	}
+#endif

@@ -4,7 +4,6 @@ EXPORTS
   CustomAllocator_Delete
   CustomAllocator_Malloc
   CustomAllocator_Free
-  memoryVisualise
   memoryUsage
   beginSnapShot
   endSnapShot

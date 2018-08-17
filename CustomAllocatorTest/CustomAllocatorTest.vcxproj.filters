@@ -23,9 +23,11 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>win</Filter>
     </ClCompile>
-    <ClCompile Include="CustomAllocatorTest.cpp" />
     <ClCompile Include="..\CustomAllocator\UseCustomAllocator.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomAllocatorTest.cpp">
+      <Filter>win</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
