@@ -31,6 +31,8 @@
 
 	static std::vector< std::variant<BlockParams, MemParams> > notCatchedEvents;
 
+	static bool visualisatorIsUsed = false;
+
 #endif
 
 class MemoryBlock
@@ -66,7 +68,7 @@ private:
 
 public:
 
-	MemoryBlock(int mem) : memoryCreated(false),Memory(mem) {}
+	MemoryBlock(int mem) : memoryCreated(false),Memory(mem), startMemAddress(nullptr) {}
 
 
 
@@ -95,8 +97,15 @@ public:
 				
 				if (allocEventDebugger != nullptr)
 				{
-					allocEventDebugger->onNewBlock(startMemAddress, (size_t)Memory);
-					allocEventDebugger->onNewMemory(startMemAddress, ptrMem, aSize);
+					if (visualisatorIsUsed == false)
+					{
+						visualisatorIsUsed = true;
+
+						allocEventDebugger->onNewBlock(startMemAddress, (size_t)Memory);
+						allocEventDebugger->onNewMemory(startMemAddress, ptrMem, aSize);
+
+						visualisatorIsUsed = false;
+					}
 				}
 				else
 				{
@@ -166,8 +175,6 @@ public:
 	{
 		auto location = occupiedAddresses.find((char*)aBlock);
 
-		Sleep(10);
-
 		if (location == end(occupiedAddresses))
 		{
 			return false;
@@ -177,7 +184,12 @@ public:
 		#ifdef ALLOCATOR_DEBUGGER
 			if (allocEventDebugger != nullptr)
 			{
-				allocEventDebugger->onDeleteMemory(startMemAddress, (*location).first, length);
+				if (visualisatorIsUsed == false)
+				{
+					visualisatorIsUsed = true;
+					allocEventDebugger->onDeleteMemory(startMemAddress, (*location).first, length);
+					visualisatorIsUsed = false;
+				}
 			}
 			else
 			{
@@ -291,7 +303,6 @@ public:
 
 };
 
-
 static std::list<MemoryBlock> memoryBlocks;
 
 void * __cdecl CustomAllocator_New(size_t aSize, int aBlockUse, char const * aFileName, int aLineNumber)
@@ -306,7 +317,8 @@ void __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse, char const * a
 
 void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-	const int MAX_MEMORY = 2097152/2;
+	
+	const int MAX_MEMORY = 2097152/1;
 
 	const int MEM_DELIM = 102400 / 8;
 
@@ -324,12 +336,14 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	for (auto& memBlock : memoryBlocks)
 	{
 		nr++;
-		if (aSize > 100 && nr <= SPECIAL_BLOCKS_NUMBER) continue;
+		if (aSize > 16 && nr <= SPECIAL_BLOCKS_NUMBER) continue ;
 		
 		void *memAddress = memBlock.malloc(aSize);
 
 		if (memAddress != nullptr)
+		{
 			return memAddress;
+		}
 
 	}
 
@@ -337,23 +351,27 @@ void * __cdecl CustomAllocator_Malloc(size_t aSize, int/* aBlockUse*/, char cons
 	{
 		memoryBlocks.push_back(MemoryBlock(MAX_MEMORY));
 
+	
 		return memoryBlocks.back().malloc(aSize);
 	}
 	else
+	{
+		
 		return nullptr;
+	}
 
-	//return _malloc_dbg(aSize, aBlockUse, aFileName, aLineNumber);
 }
 
 void __cdecl CustomAllocator_Free(void * aBlock, int /*aBlockUse*/, char const * /*aFileName*/, int /*aLineNumber*/)
 {
-
+	
 	for (auto& memBlock : memoryBlocks)
 	{
 		memBlock.free(aBlock);
 	}
+
 	// default CRT implementation
-	// GlobalFree(aBlock);
+	
 }
 
 void _cdecl beginSnapShot()
@@ -440,7 +458,7 @@ size_t _cdecl maxAvailable()
 				}
 				else
 				{
-					allocEventDebugger->onNewMemory(memParams.startBlockAddress,
+					allocEventDebugger->onDeleteMemory(memParams.startBlockAddress,
 													memParams.startMemAddress,
 													memParams.mem);
 				}

@@ -12,12 +12,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomAllocator", "CustomAl
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_visualiser|x64 = Debug_visualiser|x64
+		Debug_visualiser|x86 = Debug_visualiser|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug_visualiser|x64.ActiveCfg = Debug|x64
+		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug_visualiser|x64.Build.0 = Debug|x64
+		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug_visualiser|x86.ActiveCfg = Debug|Win32
+		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug_visualiser|x86.Build.0 = Debug|Win32
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug|x64.ActiveCfg = Debug|x64
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug|x64.Build.0 = Debug|x64
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Debug|x86.ActiveCfg = Debug|Win32
@@ -26,6 +32,10 @@ Global
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Release|x64.Build.0 = Release|x64
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Release|x86.ActiveCfg = Release|Win32
 		{9707A525-0370-4971-8F7B-0B04F8FED5AE}.Release|x86.Build.0 = Release|Win32
+		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug_visualiser|x64.ActiveCfg = Debug_visualiser|x64
+		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug_visualiser|x64.Build.0 = Debug_visualiser|x64
+		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug_visualiser|x86.ActiveCfg = Debug_visualiser|Win32
+		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug_visualiser|x86.Build.0 = Debug_visualiser|Win32
 		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug|x64.ActiveCfg = Debug|x64
 		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug|x64.Build.0 = Debug|x64
 		{548D7A28-802A-4285-807D-6F6A6C781918}.Debug|x86.ActiveCfg = Debug|Win32

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 //----------------------------------------------------------------------------
 
-#define ALLOCATOR_DEBUGGER
+
 
 void * __cdecl CustomAllocator_New   (size_t aSize,  int aBlockUse = _NORMAL_BLOCK, char const * aFileName = __FILE__, int aLineNumber = 0);
 void   __cdecl CustomAllocator_Delete(void * aBlock, int aBlockUse = _NORMAL_BLOCK, char const * aFileName = __FILE__, int aLineNumber = 0) noexcept;
